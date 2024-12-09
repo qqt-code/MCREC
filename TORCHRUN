@@ -1,0 +1,41 @@
+#!/bin/bash
+set -x
+
+# 添加这些环境变量
+# export NCCL_DEBUG=INFO
+# export NCCL_DEBUG_SUBSYS=ALL
+# export CUDA_LAUNCH_BLOCKING=1
+# export TORCH_DISTRIBUTED_DEBUG=DETAIL
+# export NCCL_IB_DISABLE=1
+# export NCCL_P2P_DISABLE=1
+
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+# export CUDA_VISIBLE_DEVICES=4,5,6,7
+# export CUDA_VISIBLE_DEVICES=4
+
+start_time="$(date +%FT%T)"
+
+# 获取可用的GPU数量
+nproc_per_node=$(echo $CUDA_VISIBLE_DEVICES | tr ',' '\n' | wc -l)
+
+if [[ "$master_addr" == "" && "$master_port" == "" ]]; then
+  nnodes=1
+  node_rank=0
+  master_port=12345
+  torchrun \
+  --master_port=$master_port \
+  --node_rank=$node_rank \
+  --nproc_per_node=$nproc_per_node \
+  --nnodes=$nnodes \
+  "$@"
+else
+  torchrun \
+  --master_addr=$master_addr \
+  --master_port=$master_port \
+  --node_rank=$node_rank \
+  --nproc_per_node=$nproc_per_node \
+  --nnodes=$nnodes \
+  "$@"
+fi
+
+echo "start_time: $start_time"
